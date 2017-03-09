@@ -5,14 +5,18 @@ import os
 config = ConfigParser.ConfigParser()
 config.read([os.path.expanduser('~/.tldr_slackbot_conf')])
 try:
-    api_key = config.get('tldr_bot Credentials', 'api_key')
-    bot_id = config.get('tldr_bot Credentials', 'bot_id')
+    slack_api_key = config.get('Slack API Credentials', 'api_key')
+    bot_id = config.get('SMMRY API Credentials', 'bot_id')
+    smmry_api_key = config.get('SMMRY API Credentials', 'api_key')
+
 except ConfigParser.NoSectionError:
-    api_key = None
+    slack_api_key = None
     bot_id = None
+    smmry_api_key = None
 finally:
     TLDR_BOT_CONFIG = {
-        'api_key': api_key,
-        'bot_id': bot_id
+        'slack_api_key': slack_api_key,
+        'bot_id': bot_id,
+        'smmry_api_key': smmry_api_key
     }
 
