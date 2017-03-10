@@ -1,8 +1,10 @@
 import requests
 import json
 
-
-BASE_URL = 'http://api.smmry.com/&SM_API_KEY={SMMRY_API_KEY}'
+# SMMRY API URL BASE
+BASE_URL = 'http://api.smmry.com/'
+# substrings used for identifying string as a URL
+URL_IDENTIFIERS = ['.com', '.org', '.edu', '.co']
 
 
 def make_request(api_key, data, summary_length=5, summary_keyword_count=3,
@@ -28,13 +30,40 @@ def make_request(api_key, data, summary_length=5, summary_keyword_count=3,
     :return: SMMRY API response
     :rtype: requests.response object
     """
-    params = {}
+    params = {
+        'SM_API_KEY': api_key,
+        'SM_LENGTH': summary_length,
+        'SM_KEYWORD_COUNT': summary_keyword_count,
+    }
+    if any(s in data for s in URL_IDENTIFIERS):
+        # if the provided data is a URL, pass as URL param
+        params['SM_URL'] = data
+    # need to do this to avoid percent encoding url
+    params_str = '&'.join(
+           '%s=%s' % (param, val) for param, val in params.items()
+    )
+    if summary_quote_avoid:
+        params_str += '&SM_QUOTE_AVOID'
+    if summary_with_break:
+        params_str += '&SM_WITH_BREAK'
     headers = {'Expect': ''}
     payload = {'sm_api_input': data}
     response = requests.post(
-        BASE_URL.format(SMMRY_API_KEY=api_key),
+        BASE_URL,
+        headers=headers,
+        params=params_str,
         data=payload
     )
-    ## TODO: figure out URL shit
-    return None
+    return response
+
+
+def parse_response(response):
+    """Parses response from SMMRY API.
+
+    :param response: SMMRY API response
+    :type response: requests.response object
+
+    :return: TBD!
+    """
+    pass
 
