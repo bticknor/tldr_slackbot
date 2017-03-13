@@ -58,12 +58,27 @@ def make_request(api_key, data, summary_length=5, summary_keyword_count=3,
 
 
 def parse_response(response):
-    """Parses response from SMMRY API.
+    """Checks that the request went through and that the SMMRY API
+    didn't respond with an error message.
 
     :param response: SMMRY API response
     :type response: requests.response object
 
-    :return: TBD!
+    :return: response decoded from JSON
+    :rtype: dict
     """
-    pass
+    if response.status_code != 200:
+        raise RuntimeError(
+            'Request to SMMRY API failed with code {}'.format(
+                response.status_code
+            )
+        )
+    parsed_response = json.loads(response.text)
+    if 'sm_api_error' in parsed_response.keys():
+        raise RuntimeError(
+            'SMMRY API failed with message: {}'.format(
+                parsed_response['sm_api_error']
+            )
+        )
+    return parsed_response
 
