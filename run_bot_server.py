@@ -2,7 +2,7 @@ from slackclient import SlackClient
 import time
 from config import TLDR_BOT_CONFIG
 from request_smmry import (
-    make_request,
+    request_smmry,
     parse_response
 )
 
@@ -30,12 +30,12 @@ def parse_slack_activity(rtm_output):
     :return TBD:
     :rtype: TBD
     """
+    directed_at_bot = '<@{}>'.format(BOT_ID)
     if rtm_output and len(rtm_output) > 0:
         for event in rtm_output:
-           ## debug
-           print "event is", event
-
-            # parse event
+            if 'text' in event and directed_at_bot in event['text']:
+                print event
+                # parse event
     return None
 
 

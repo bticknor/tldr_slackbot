@@ -7,7 +7,7 @@ BASE_URL = 'http://api.smmry.com/'
 URL_IDENTIFIERS = ['.com', '.org', '.edu', '.co']
 
 
-def make_request(api_key, data, summary_length=5, summary_keyword_count=3,
+def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
         summary_quote_avoid=False, summary_with_break=False):
     """Makes a request to the SMMRY API.
 
