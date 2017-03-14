@@ -2,10 +2,10 @@ import slackclient
 import requests
 
 ## need to use groups.history instead of channels.history. mofo
-BASE_URL = 'https://slack.com/api/channels.history'
+BASE_URL = 'https://slack.com/api/'
 
 
-def get_channel_history(api_key, channel_id, count=100):
+def get_slack_history(method, api_key, channel_id, count=100):
     """Gets the channel history for the specified channel.
 
     :param api_key: API key
