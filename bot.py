@@ -1,14 +1,10 @@
 """
-Module for core bot logic, defind in the Bot class.
-
-A Bot instance keeps track of (caches) private channels available by
-user, since these cannot be referenced by id in slack.  This allows an
-invoker of the bot to summarize something posted in a private channel
-outside of that private channel, so users must be careful when doing
-the bot this way!
+Module for core bot logic.
 """
 
 from slackclient import SlackClient
+from utils import extract_urls
+from smmry import summarize_data
 
 
 class Bot(object):
@@ -18,17 +14,12 @@ class Bot(object):
     What's up! I'm a bot for summarizing external links sent over
     Slack. Here's how to use me:
 
-    @tldr_bot [#channel|#private_group|@dm|help]
+    @tldr_bot [#channel|@dm|help]
 
     Call me and I'll automatically summarize the most recent external
-    link posted to the specified channel/private_group/im, outputting
-    the summary to where you called me from.  If you don't specify a
-    place to look, I'll just look in the channel/group/im where you
-    called me.
-
-    BE CAREFUL where you call me when referencing one of your private
-    channels, as I will be outputting  a (summarized) post from that
-    private channel!
+    link posted to the specified channel/dm, outputting the summary to
+    where you called me from.  If you don't specify a place to look,
+    I'll just look in the channel/dm where you called me.
     """
 
     confused_message = """
@@ -36,14 +27,14 @@ class Bot(object):
     regarding how to use me!
     """
 
-    def __init__(self, bot_id, token):
+    def __init__(self, bot_id, token, smmry_api_key):
         self.bot_id = bot_id
         self.token = token
+        self.smmry_api_key = smmry_api_key
         # instantiate connection to Slack RTM API
         self.client = SlackClient(BOT_TOKEN)
         if not self.client.rtm_connect():
             raise RuntimeError('Failed to connect to Slack RTM API!')
-        self.groups = []
 
     def listen(self):
         """Reads from the Slack RTM firehose."""
@@ -68,74 +59,68 @@ class Bot(object):
         return command_events
 
     def parse_command(self, command_event):
-        """Determines whether the command event to the bot is:
-
-          0) An invocation of the help message
-          1) A command to summarize a link sent to a public channel
-          2) A command to summarize a link sent to a private channel
-          3) A command to summarize a link sent in a direct message
-          4) Indecipherable
-
-        The types of 1-3 are referenced by the name of the associated
-        Slack API method.
-
-        For 1-3, a channel identifying string is parsed out of the
-        command text, for use in the subsequent slack API call.
-
-        These are discrete events because they require different
-        actions by the bot.  A 0 requires simple printing of the help
-        message, while 1-3 all require calls to different Slack API
-        methods. A 4 will result in a simple printing of the "confused"
-        message.
+        """Parses the command, returning either the id of a channel in
+        which to look for links to summarize, or a prompt for the
+        'help' or 'confused' bot messages.
 
         :param command_event: RTM event including a call to the bot
         :type command_event: dict
 
-        :return command_type, channel_id: type of command issued, id of
-        channel/group/dm referenced
-        :rtype: 2-tuple of strings
+        :return parsed_command: parsed command
+        :rtype: str, either a channel/dm ID, 'helpme', or
+        'indecipherable'
         """
         command_text_tokens = command_event['text'].split(' ')
+        # if no bot arg, get id of current channel
+        if len(command_text_tokens) == 1:
+            parsed_command = command_event['channel']
         # only care about the first token after the bot invocation
         bot_invocation_pos = command_text_tokens.index(
             '<@{}>'.format(self.bot_id)
         )
-        ## TODO: when nothing specified?!?
         command_token = command_text_tokens[bot_invocation_pos + 1]
         if command_token == 'help':
             # invocation of the help message
-            command_type = 'helpme'
-            channel_id = ''
+            parsed_command = 'helpme'
         elif command_token[:2] == '<#':
             # reference to a public channel
-            command_type = 'channels.history'
-            channel_id = command_token.split('|')[0][2:]
+            parsed_command = command_token.split('|')[0][2:]
         elif command_token[:2] == '<@':
             # reference to a direct message
-            command_type = 'im.history'
-            channel_id = command_token[2:][:-1]
-        elif command_token[0] == '#':
-            # reference to a private group
-            command_type = 'groups.history'
-            channel_id = command_token[1:]
+            parsed_command = command_token[2:][:-1]
         else:
-            command_type = 'indecipherable'
-            channel_id = ''
-        return command_type, channel_id
+            parsed_command = 'indescipherable'
+        return parsed_command
+        ## TODO: need channel where posted
 
-    def handle_command(self, command_type, channel_id, command_event):
+    def handle_command(self, channel_id):
         """Takes appropriate action using command_event params based on
         command_type.
 
         ## TODO: rest of docstring
         """
-        if command_type == 'helpe':
+        if command_type == 'helpme':
             return self.help_message
         elif command_type == 'indecipherable':
             return self.confused_message
         else:
-            history = get_slack_history(
-                command_type, self.token, channel_id
-            )
-        ## TODO: finish
+            channel_history = get_slack_history(self.token, channel_id)
+        url_to_summarize = None
+        for message in channel_history:
+            contained_urls = extract_urls(message['text'])
+            if contained_urls:
+                # only get most recent URL from most recent message
+                url_to_summarize = contained_urls[-1]
+                break
+        url_summary = summarize_data(self.smmry_api_key, url)
+        return url_summary
+
+    def write_message(self, channel_id):
+        # writes message to slack
+        ## TODO: this
+        pass
+
+
+
+
 

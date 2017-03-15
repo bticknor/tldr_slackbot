@@ -1,10 +1,9 @@
 import requests
 import json
+from utils import contains_url
 
 # SMMRY API URL BASE
 BASE_URL = 'http://api.smmry.com/'
-# substrings used for identifying string as a URL
-URL_IDENTIFIERS = ['.com', '.org', '.edu', '.co']
 
 
 def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
@@ -27,15 +26,15 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     sentences
     :type summary_with_break: bool
 
-    :return: SMMRY API response
-    :rtype: requests.response object
+    :return: parsed SMMRY API response
+    :rtype: dict
     """
     params = {
         'SM_API_KEY': api_key,
         'SM_LENGTH': summary_length,
         'SM_KEYWORD_COUNT': summary_keyword_count,
     }
-    if any(s in data for s in URL_IDENTIFIERS):
+    if contains_url(data):
         # if the provided data is a URL, pass as URL param
         params['SM_URL'] = data
     # need to do this to avoid percent encoding url
@@ -81,4 +80,43 @@ def parse_response(response):
             )
         )
     return parsed_response
+
+
+def format_response(parsed_response):
+    """Formats response as a string that can be easily written to
+    Slack.
+
+    :param parsed_response: parsed response from SMMRY API
+    :type parsed_response: dict
+
+    :return: formatted_response
+    :rtype: str
+    """
+    return """
+    Summary title: {0}
+    Summary: {1}
+    Keywords: {2}
+    """.format(
+        parsed_response['sm_api_title'],
+        parsed_response['sm_api_content'],
+        str(parsed_response['sm_api_keyword_array'])
+    )
+
+
+def summarize_data(smmry_api_key, data):
+    """Uses SMMRY API to summarize provided data.
+
+    :param smmry_api_key: SMMRY API key
+    :type smmry_api_key: str
+    :param data: data to summarize, eithe text block or link to
+    external webpage
+    :type data: str
+
+    :return: summarized data, as a formatted string
+    :rtype: str
+    """
+    smmry_response = request_smmry(smmry_api_key, data)
+    parsed_response = parse_response(smmry_response)
+    formatted_response = format_response(parsed_response)
+    return formatted_response
 
