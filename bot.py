@@ -5,6 +5,10 @@ Module for core bot logic.
 from slackclient import SlackClient
 from utils import extract_urls
 from smmry import summarize_data
+from slack import (
+    get_slack_history,
+    write_slack_message
+)
 
 
 class Bot(object):
@@ -27,10 +31,11 @@ class Bot(object):
     regarding how to use me!
     """
 
-    def __init__(self, bot_id, token, smmry_api_key):
+    def __init__(self, bot_id, token, smmry_api_key, username):
         self.bot_id = bot_id
         self.token = token
         self.smmry_api_key = smmry_api_key
+        self.username = username
         # instantiate connection to Slack RTM API
         self.client = SlackClient(BOT_TOKEN)
         if not self.client.rtm_connect():
@@ -91,20 +96,23 @@ class Bot(object):
         else:
             parsed_command = 'indescipherable'
         return parsed_command
-        ## TODO: need channel where posted
 
-    def handle_command(self, channel_id):
+    def handle_command(self, parsed_command):
         """Takes appropriate action using command_event params based on
         command_type.
 
-        ## TODO: rest of docstring
+        :param parsed_command: command to handle
+        :type parsed command: str
+
+        :return url_summary: summary of url
+        :rtype: str
         """
-        if command_type == 'helpme':
+        if parsed_command == 'helpme':
             return self.help_message
-        elif command_type == 'indecipherable':
+        elif parsed_command == 'indecipherable':
             return self.confused_message
         else:
-            channel_history = get_slack_history(self.token, channel_id)
+            channel_history = get_slack_history(self.token, parsed_command)
         url_to_summarize = None
         for message in channel_history:
             contained_urls = extract_urls(message['text'])
@@ -112,15 +120,26 @@ class Bot(object):
                 # only get most recent URL from most recent message
                 url_to_summarize = contained_urls[-1]
                 break
-        url_summary = summarize_data(self.smmry_api_key, url)
+        if url_to_summarize is None:
+            raise RuntimeError('I can\'t find the URL to summarize!')
+        url_summary = summarize_data(self.smmry_api_key, url_to_summarize)
         return url_summary
 
-    def write_message(self, channel_id):
-        # writes message to slack
-        ## TODO: this
+    def write_message(self, channel_id, message):
+        """Writes message to specified channel.
+
+        :param channel_id: id of channel to write message to
+        :type channel_id: str
+        :param message: message to write
+        :type message: str
+
+        :return: None
+        """
+        write_slack_message(self.token, channel_id, message, self.username)
+
+    def run(self):
+        """Runs bot server."""
         pass
-
-
 
 
 
