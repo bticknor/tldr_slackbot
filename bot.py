@@ -2,6 +2,7 @@
 Module for core bot logic.
 """
 
+import time
 from slackclient import SlackClient
 from utils import extract_urls
 from smmry import summarize_data
@@ -31,11 +32,13 @@ class Bot(object):
     regarding how to use me!
     """
 
-    def __init__(self, bot_id, token, smmry_api_key, username):
+    def __init__(self, bot_id, token, smmry_api_key, username,
+            read_websocket_delay=1):
         self.bot_id = bot_id
         self.token = token
         self.smmry_api_key = smmry_api_key
         self.username = username
+        self.read_websocket_delay = read_websocket_delay
         # instantiate connection to Slack RTM API
         self.client = SlackClient(BOT_TOKEN)
         if not self.client.rtm_connect():
@@ -139,7 +142,14 @@ class Bot(object):
 
     def run(self):
         """Runs bot server."""
-        pass
-
-
+        while True:
+            rtm_output = self.listen()
+            commands = find_bot_commands(rtm_output)
+            for command_event in commands:
+                parsed_command = self.parse_command(command_event)
+                message = self.handle_command(parsed_command)
+                ## need to get channel id to write message
+                ## TODO
+                self.write_message()
+            time.sleep(self.read_websocket_delay)
 
