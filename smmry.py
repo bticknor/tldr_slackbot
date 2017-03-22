@@ -36,7 +36,8 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     }
     if contains_url(data):
         # if the provided data is a URL, pass as URL param
-        params['SM_URL'] = data
+        parsed_url = data[1:-1]
+        params['SM_URL'] = parsed_url
     # need to do this to avoid percent encoding url
     params_str = '&'.join(
            '%s=%s' % (param, val) for param, val in params.items()
@@ -46,6 +47,11 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     if summary_with_break:
         params_str += '&SM_WITH_BREAK'
     headers = {'Expect': ''}
+    
+    ##DEBUG
+    print "attempting to summarize:", data
+    
+    
     payload = {'sm_api_input': data}
     response = requests.post(
         BASE_URL,
@@ -75,8 +81,9 @@ def parse_response(response):
     parsed_response = json.loads(response.text)
     if 'sm_api_error' in parsed_response.keys():
         raise RuntimeError(
-            'SMMRY API failed with message: {}'.format(
-                parsed_response['sm_api_error']
+            'SMMRY API failed to summarize {0} with message {1}'.format(
+                response.url,
+                parsed_response['sm_api_message']
             )
         )
     return parsed_response
@@ -115,6 +122,10 @@ def summarize_data(smmry_api_key, data):
     :return: summarized data, as a formatted string
     :rtype: str
     """
+
+    ##DBUG
+    print "first attempting to summarize: ", data
+
     smmry_response = request_smmry(smmry_api_key, data)
     parsed_response = parse_response(smmry_response)
     formatted_response = format_response(parsed_response)

@@ -7,7 +7,7 @@ from slackclient import SlackClient
 from utils import extract_urls
 from smmry import summarize_data
 from slack import (
-    get_slack_history,
+    get_channel_history,
     write_slack_message
 )
 
@@ -33,16 +33,17 @@ class Bot(object):
     """
 
     def __init__(self, bot_id, token, smmry_api_key, username,
-            read_websocket_delay=1):
+            read_websocket_delay):
         self.bot_id = bot_id
         self.token = token
         self.smmry_api_key = smmry_api_key
         self.username = username
         self.read_websocket_delay = read_websocket_delay
         # instantiate connection to Slack RTM API
-        self.client = SlackClient(BOT_TOKEN)
+        self.client = SlackClient(token)
         if not self.client.rtm_connect():
             raise RuntimeError('Failed to connect to Slack RTM API!')
+        self.active_channel = None
 
     def listen(self):
         """Reads from the Slack RTM firehose."""
@@ -78,10 +79,11 @@ class Bot(object):
         :rtype: str, either a channel/dm ID, 'helpme', or
         'indecipherable'
         """
+        self.active_channel = command_event['channel']
         command_text_tokens = command_event['text'].split(' ')
         # if no bot arg, get id of current channel
         if len(command_text_tokens) == 1:
-            parsed_command = command_event['channel']
+            return command_event['channel']
         # only care about the first token after the bot invocation
         bot_invocation_pos = command_text_tokens.index(
             '<@{}>'.format(self.bot_id)
@@ -115,9 +117,12 @@ class Bot(object):
         elif parsed_command == 'indecipherable':
             return self.confused_message
         else:
-            channel_history = get_slack_history(self.token, parsed_command)
+            channel_history = get_channel_history(self.token, parsed_command)
         url_to_summarize = None
         for message in channel_history:
+            # ignore all bot messages
+            if 'bot_id' in message.keys():
+                continue
             contained_urls = extract_urls(message['text'])
             if contained_urls:
                 # only get most recent URL from most recent message
@@ -128,7 +133,7 @@ class Bot(object):
         url_summary = summarize_data(self.smmry_api_key, url_to_summarize)
         return url_summary
 
-    def write_message(self, channel_id, message):
+    def write_message(self, message):
         """Writes message to specified channel.
 
         :param channel_id: id of channel to write message to
@@ -138,18 +143,21 @@ class Bot(object):
 
         :return: None
         """
-        write_slack_message(self.token, channel_id, message, self.username)
+        write_slack_message(
+            self.token, self.active_channel, message, self.username
+        )
 
     def run(self):
         """Runs bot server."""
         while True:
             rtm_output = self.listen()
-            commands = find_bot_commands(rtm_output)
+            commands = self.find_bot_commands(rtm_output)
             for command_event in commands:
                 parsed_command = self.parse_command(command_event)
-                message = self.handle_command(parsed_command)
-                ## need to get channel id to write message
-                ## TODO
-                self.write_message()
+                try:
+                    message = self.handle_command(parsed_command)
+                except RuntimeError as error:
+                    message = error.message
+                self.write_message(message)
             time.sleep(self.read_websocket_delay)
 

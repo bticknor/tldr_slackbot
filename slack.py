@@ -18,9 +18,11 @@ def request_slack(api_method, params):
     """
     url = BASE_URL + api_method
     response = requests.get(url, params=params)
-    assert response.status_code == 200, 'Issue connecting to Slack API!'
+    if response.status_code != 200:
+        raise RuntimeError('Issue connecting to Slack API!')
     decoded_response = json.loads(response.text)
-    assert decoded_response['ok'], 'Issue pulling data from Slack API!'
+    if not decoded_response['ok']:
+        raise RuntimeError('Issue pulling data from Slack API!')
     return decoded_response
 
 
