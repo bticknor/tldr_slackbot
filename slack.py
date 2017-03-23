@@ -1,6 +1,7 @@
 import json
 import slackclient
 import requests
+from utils import extract_urls
 
 BASE_URL = 'https://slack.com/api/'
 
@@ -27,7 +28,7 @@ def request_slack(api_method, params):
 
 
 def get_channel_history(token, channel_id, count=100):
-    """Gets the channel history for the specified channel.
+    """Gets the channel history for the specified public channel.
 
     :param token: API token
     :type token: str
@@ -55,6 +56,30 @@ def get_channel_history(token, channel_id, count=100):
     }
     response = request_slack(api_method, params)
     return response['messages']
+
+
+def get_most_recent_url(channel_history):
+    """Fetches the most recent URL in the channel history.
+
+    :param channel_history: channel_history to parse
+    :type channel_history: list of dicts
+
+    :return: most recent URL found
+    :rtype: str
+    """
+    url = None
+    for message in channel_history:
+        # ignore all bot messages
+        if 'bot_id' in message.keys():
+            continue
+        contained_urls = extract_urls(message['text'])
+        if contained_urls:
+            # get most recent URL
+            url = contained_urls[-1]
+            break
+    if url is None:
+        raise RuntimeError('I can\'t find the URL to summarize!')
+    return url
 
 
 def write_slack_message(token, channel_id, message, username):
