@@ -78,9 +78,6 @@ def parse_command(bot_token, command_event):
     :return: url to summarize, channel from which command came
     :rtype: 2-tuple of floats
     """
-    
-    print "parsing event:", command_event 
-    
     channel = command_event['channel']
     command_tokens = command_event['text'].split(' ')
     if 'help' in command_tokens:
