@@ -12,81 +12,72 @@ from slack import (
 )
 
 
-class Bot(object):
-    """Main bot class."""
+HELP_MESSAGE = """
+What's up! I'm a bot for summarizing external links sent over
+Slack. Here's how to use me:
 
-    help_message = """
-    What's up! I'm a bot for summarizing external links sent over
-    Slack. Here's how to use me:
+@tldr_bot [#channel|@dm|help]
 
-    @tldr_bot [#channel|@dm|help]
+Call me and I'll automatically summarize the most recent external
+link posted to the specified channel/dm, outputting the summary to
+where you called me from.  If you don't specify a place to look,
+I'll just look in the channel/dm where you called me.
+"""
 
-    Call me and I'll automatically summarize the most recent external
-    link posted to the specified channel/dm, outputting the summary to
-    where you called me from.  If you don't specify a place to look,
-    I'll just look in the channel/dm where you called me.
+CONFUSED_MESSAGE = """
+I'm sorry I didn't understand that...try @tldr_bot help for info
+regarding how to use me!
+"""
+
+
+def find_bot_commands(bot_id, rtm_output):
+    """Parses output from the RTM firehose, looking for references
+    to the bot.
+
+    :param bot_id: id of bot
+    :type bot_id: str
+    :param rtm_output: raw RTM firehose output
+    :type rtm_output: records (list of dicts)
+
+    :return: commands to the bot
+    :rtype: list, empty if no bot commands found
     """
+    bot_called = '<@{}>'.format(bot_id)
+    command_events = []
+    if rtm_output and len(rtm_output) > 0:
+        for event in rtm_output:
+            if 'text' in event and bot_called in event['text']:
+                command_events.append(event)
+    return command_events
 
-    confused_message = """
-    I'm sorry I didn't understand that...try @tldr_bot help for info
-    regarding how to use me!
+
+def parse_command(bot_id, command_event):
+    """Parses the command, returning either the id of a channel in
+    which to look for links to summarize, or a prompt for the
+    'help' or 'confused' bot messages.
+
+    :param bot_id: id of bot
+    :type bot_id: str
+    :param command_event: RTM event including a call to the bot
+    :type command_event: dict
+
+    :return parsed_command, channel: parsed command and channel it
+    came from
+    :rtype: 2-tuple of str, first being either:
+      1) channel/dm ID
+      2) 'helpme'
+      3) 'indecipherable
+    Second being channel id that command was sourced from.
     """
-
-    def __init__(self, bot_id, token, smmry_api_key, username,
-            read_websocket_delay):
-        self.bot_id = bot_id
-        self.token = token
-        self.smmry_api_key = smmry_api_key
-        self.username = username
-        self.read_websocket_delay = read_websocket_delay
-        # instantiate connection to Slack RTM API
-        self.client = SlackClient(token)
-        if not self.client.rtm_connect():
-            raise RuntimeError('Failed to connect to Slack RTM API!')
-        self.active_channel = None
-
-    def listen(self):
-        """Reads from the Slack RTM firehose."""
-        return self.client.rtm_read()
-
-    def find_bot_commands(self, rtm_output):
-        """Parses output from the RTM firehose, looking for references
-        to the bot.
-
-        :param rtm_output: raw RTM firehose output
-        :type rtm_output: records (list of dicts)
-
-        :return: commands to the bot
-        :rtype: list, empty if no bot commands found
-        """
-        bot_called = '<@{}>'.format(self.bot_id)
-        command_events = []
-        if rtm_output and len(rtm_output) > 0:
-            for event in rtm_output:
-                if 'text' in event and bot_called in event['text']:
-                    command_events.append(event)
-        return command_events
-
-    def parse_command(self, command_event):
-        """Parses the command, returning either the id of a channel in
-        which to look for links to summarize, or a prompt for the
-        'help' or 'confused' bot messages.
-
-        :param command_event: RTM event including a call to the bot
-        :type command_event: dict
-
-        :return parsed_command: parsed command
-        :rtype: str, either a channel/dm ID, 'helpme', or
-        'indecipherable'
-        """
-        self.active_channel = command_event['channel']
-        command_text_tokens = command_event['text'].split(' ')
-        # if no bot arg, get id of current channel
-        if len(command_text_tokens) == 1:
-            return command_event['channel']
+    channel = command_event['channel']
+    command_text_tokens = command_event['text'].split(' ')
+    # if no bot arg, get id of current channel
+    if len(command_text_tokens) == 1:
+        parsed_command = channel
+    else:
         # only care about the first token after the bot invocation
         bot_invocation_pos = command_text_tokens.index(
-            '<@{}>'.format(self.bot_id)
+            '<@{}>'.format(bot_id)
         )
         command_token = command_text_tokens[bot_invocation_pos + 1]
         if command_token == 'help':
@@ -100,24 +91,30 @@ class Bot(object):
             parsed_command = command_token[2:][:-1]
         else:
             parsed_command = 'indescipherable'
-        return parsed_command
+    return (parsed_command, channel)
 
-    def handle_command(self, parsed_command):
-        """Takes appropriate action using command_event params based on
-        command_type.
 
-        :param parsed_command: command to handle
-        :type parsed command: str
+def act_on_command(parsed_command, channel, bot_token, smmry_api_key):
+    """Handles command and writes output to specified channel.
 
-        :return url_summary: summary of url
-        :rtype: str
-        """
-        if parsed_command == 'helpme':
-            return self.help_message
-        elif parsed_command == 'indecipherable':
-            return self.confused_message
-        else:
-            channel_history = get_channel_history(self.token, parsed_command)
+    :param parsed_command: command to handle
+    :type parsed command: str
+    :param channel: ID of channel to write output message to
+    :type channel: str
+    :param bot_token: slack token of bot
+    :type bot_token: str
+    :param smmry_api_key: SMMRY API key
+    :type smmry_api_key: str
+
+    :return : output of bot into channel
+    :rtype: str
+    """
+    if parsed_command == 'helpme':
+        output = HELP_MESSAGE
+    elif parsed_command == 'indecipherable':
+        output = CONFUSED_MESSAGE
+    else:
+        channel_history = get_channel_history(bot_token, parsed_command)
         url_to_summarize = None
         for message in channel_history:
             # ignore all bot messages
@@ -130,34 +127,28 @@ class Bot(object):
                 break
         if url_to_summarize is None:
             raise RuntimeError('I can\'t find the URL to summarize!')
-        url_summary = summarize_data(self.smmry_api_key, url_to_summarize)
-        return url_summary
+        try:
+            output = summarize_data(smmry_api_key, url_to_summarize)
+        except RuntimeError as error:
+            output = error.message
+    write_slack_message(bot_token, channel, output, 'tdlr_bot')
 
-    def write_message(self, message):
-        """Writes message to specified channel.
 
-        :param channel_id: id of channel to write message to
-        :type channel_id: str
-        :param message: message to write
-        :type message: str
+def handle_command(bot_id, command_event, bot_token, smmry_api_key):
+    """Parses command event and takes appropriate action.  This logic
+    is grouped together for the sake of running it all asynchronously.
 
-        :return: None
-        """
-        write_slack_message(
-            self.token, self.active_channel, message, self.username
-        )
+    :param bot_id: id of bot
+    :type bot_id: str
+    :param command_event: command to handle
+    :type command_event: dict
+    :param bot_token: API token of bot
+    :type bot_token: str
+    :param smmry_api_key: SMMRY API key
+    :type smmry_api_key: str
 
-    def run(self):
-        """Runs bot server."""
-        while True:
-            rtm_output = self.listen()
-            commands = self.find_bot_commands(rtm_output)
-            for command_event in commands:
-                parsed_command = self.parse_command(command_event)
-                try:
-                    message = self.handle_command(parsed_command)
-                except RuntimeError as error:
-                    message = error.message
-                self.write_message(message)
-            time.sleep(self.read_websocket_delay)
+    :return: None
+    """
+    parsed_command, channel = parse_command(bot_id, command_event)
+    act_on_command(parsed_command, channel, bot_token, smmry_api_key)
 
