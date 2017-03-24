@@ -1,6 +1,6 @@
 import requests
 import json
-from utils import contains_url
+from tldr_slackbot.utils import contains_url
 
 # SMMRY API URL BASE
 BASE_URL = 'http://api.smmry.com/'

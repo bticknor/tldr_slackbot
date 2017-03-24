@@ -1,7 +1,7 @@
 import json
 import slackclient
 import requests
-from utils import extract_urls
+from tldr_slackbot.utils import extract_urls
 
 BASE_URL = 'https://slack.com/api/'
 

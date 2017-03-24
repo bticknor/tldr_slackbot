@@ -1,7 +1,7 @@
 from slackclient import SlackClient
 import time
-from config import TLDR_BOT_CONFIG
-from bot import execute_bot
+from tldr_slackbot.config import TLDR_BOT_CONFIG
+from tldr_slackbot.bot import execute_bot
 
 # read from event firehose at 1 second intervals
 READ_WEBSOCKET_DELAY = 1
