@@ -79,7 +79,7 @@ def get_most_recent_url(channel_history):
             break
     if url is None:
         raise RuntimeError('I can\'t find the URL to summarize!')
-    return url
+    return url[1:-1]
 
 
 def write_slack_message(token, channel_id, message, username):

@@ -29,15 +29,14 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     :return: parsed SMMRY API response
     :rtype: dict
     """
+    if not contains_url(data):
+        raise RuntimeError('Link provided not a valid URL')
     params = {
         'SM_API_KEY': api_key,
         'SM_LENGTH': summary_length,
         'SM_KEYWORD_COUNT': summary_keyword_count,
     }
-    if contains_url(data):
-        # if the provided data is a URL, pass as URL param
-        parsed_url = data[1:-1]
-        params['SM_URL'] = parsed_url
+    params['SM_URL'] = data
     # need to do this to avoid percent encoding url
     params_str = '&'.join(
            '%s=%s' % (param, val) for param, val in params.items()
@@ -47,12 +46,10 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     if summary_with_break:
         params_str += '&SM_WITH_BREAK'
     headers = {'Expect': ''}
-    payload = {'sm_api_input': data}
     response = requests.post(
         BASE_URL,
         headers=headers,
         params=params_str,
-        data=payload
     )
     return response
 
