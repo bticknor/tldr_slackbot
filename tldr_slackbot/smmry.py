@@ -24,7 +24,7 @@ def request_smmry(api_key, url, summary_length=5, summary_keyword_count=3):
     """
     if not contains_url(url):
         raise RuntimeError('Link provided not a valid URL')
-    params = ('?SM_LENGTH={length}&SM_API_KEY={api_key}&SM_KEYWORD_COUNt'
+    params = ('?SM_LENGTH={length}&SM_API_KEY={api_key}&SM_KEYWORD_COUNT'
               '={keyword_count}&SM_URL={url}')
     params = params.format(
         length=summary_length,
