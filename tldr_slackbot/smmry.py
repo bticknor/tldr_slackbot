@@ -6,8 +6,7 @@ from utils import contains_url
 BASE_URL = 'http://api.smmry.com/'
 
 
-def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
-        summary_quote_avoid=False, summary_with_break=False):
+def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3):
     """Makes a request to the SMMRY API.
 
     :param api_key: SMMRY API key
@@ -20,36 +19,24 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3,
     :type summary_length: int
     :param summary_keyword_count: number of top keywords returned
     :type summary_keyword_count: int
-    :param summary_quote_avoid: whether to avoid quotations
-    :type summary_quote_avoid: bool
-    :param summary_with_break: whether to include "[BREAK]" between
-    sentences
-    :type summary_with_break: bool
 
     :return: parsed SMMRY API response
     :rtype: dict
     """
     if not contains_url(data):
         raise RuntimeError('Link provided not a valid URL')
-    params = {
-        'SM_API_KEY': api_key,
-        'SM_LENGTH': summary_length,
-        'SM_KEYWORD_COUNT': summary_keyword_count,
-    }
-    params['SM_URL'] = data
-    # need to do this to avoid percent encoding url
-    params_str = '&'.join(
-           '%s=%s' % (param, val) for param, val in params.items()
+    params = ('?SM_LENGTH={length}&SM_API_KEY={api_key}&SM_KEYWORD_COUNt'
+              '={keyword_count}&SM_URL={url}')
+    params = params.format(
+        length=summary_length,
+        api_key=api_key,
+        keyword_count=summary_keyword_count,
+        url=data
     )
-    if summary_quote_avoid:
-        params_str += '&SM_QUOTE_AVOID'
-    if summary_with_break:
-        params_str += '&SM_WITH_BREAK'
     headers = {'Expect': ''}
     response = requests.post(
-        BASE_URL,
-        headers=headers,
-        params=params_str,
+        BASE_URL + params,
+        headers=headers
     )
     return response
 
