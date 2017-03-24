@@ -6,15 +6,14 @@ from utils import contains_url
 BASE_URL = 'http://api.smmry.com/'
 
 
-def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3):
-    """Makes a request to the SMMRY API.
+def request_smmry(api_key, url, summary_length=5, summary_keyword_count=3):
+    """Makes a request to the SMMRY API in order to summarize the
+    provided URL.
 
     :param api_key: SMMRY API key
     :type api_key: str
-    :param data: one of two things:
-        - URL of external webpage to summarize
-        - block of text to summarize
-    :type data: str
+    :param url: URL to summarize
+    :type url: str
     :param summary_length: number of sentences returned
     :type summary_length: int
     :param summary_keyword_count: number of top keywords returned
@@ -23,7 +22,7 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3):
     :return: parsed SMMRY API response
     :rtype: dict
     """
-    if not contains_url(data):
+    if not contains_url(url):
         raise RuntimeError('Link provided not a valid URL')
     params = ('?SM_LENGTH={length}&SM_API_KEY={api_key}&SM_KEYWORD_COUNt'
               '={keyword_count}&SM_URL={url}')
@@ -31,7 +30,7 @@ def request_smmry(api_key, data, summary_length=5, summary_keyword_count=3):
         length=summary_length,
         api_key=api_key,
         keyword_count=summary_keyword_count,
-        url=data
+        url=url
     )
     headers = {'Expect': ''}
     response = requests.post(
@@ -91,20 +90,19 @@ def format_response(parsed_response):
     )
 
 
-def summarize_data(smmry_api_key, data):
-    """Uses SMMRY API to summarize provided data.
+def summarize_data(smmry_api_key, url):
+    """Uses SMMRY API to summarize provided URL.
 
     :param smmry_api_key: SMMRY API key
     :type smmry_api_key: str
-    :param data: data to summarize, eithe text block or link to
-    external webpage
-    :type data: str
+    :param url: url to summarize
+    :type url: str
 
     :return: summarized data, as a formatted string
     :rtype: str
     """
-    smmry_response = request_smmry(smmry_api_key, data)
-    parsed_response = parse_response(smmry_response, data)
+    smmry_response = request_smmry(smmry_api_key, url)
+    parsed_response = parse_response(smmry_response, url)
     formatted_response = format_response(parsed_response)
     return formatted_response
 

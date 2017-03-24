@@ -58,6 +58,7 @@ def execute_bot(bot_config, rtm_output):
     if rtm_output and len(rtm_output) > 0:
         for event in rtm_output:
             if is_relevant_event(event, bot_id):
+                ##TODO: make this call asynchronous
                 handle_command(bot_id, event, bot_token, smmry_api_key) 
 
 
@@ -94,9 +95,11 @@ def is_relevant_event(event, bot_id):
 
 
 def parse_event(bot_token, event):
-    """Parses the command event, first looking for the 'help' arg, and
-    if not finding it in the command text fetching the channel history
-    and looking for urls.
+    """Parses the command event in order to identify the URL to
+    summarize, and the channel to write output to. When the 'help'
+    arg is provided, the command is indicated as a 'helpme' instead of
+    a URL to parse, when the 'help' command is not provided and the
+    bot cannot find a URL, it returns 'indecipherable' as the command.
 
     :param bot_token: bot token
     :type bot_token: str

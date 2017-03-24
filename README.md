@@ -24,11 +24,11 @@ Getting the user ID of the bot is straightforward, and just involves getting the
 Place a config file named ```.tldr_slackbot_conf``` in your home directory, formatted like so:
 
 ```
-[Slack API Credentials]
+[Slack]
 bot_token={BOT_TOKEN}
 bot_id={BOT_ID}
 
-[SMMRY API Credentials]
+[SMMRY]
 api_key={SMMRY_API_KEY}
 ```
 
