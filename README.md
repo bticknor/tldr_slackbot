@@ -6,7 +6,9 @@ Inspired by the Reddit TLDR Bot, here is a bot that does the same thing on Slack
 
 ### Installation
 
-###TODO: THIS!
+Right now, the TLDR bot can only be ```pip```d directly from GitHub, it isn't registered on PyPi:
+
+```pip install git+https://github.com/bticknor/tldr_slackbot```
 
 ### Prerequisites
 
