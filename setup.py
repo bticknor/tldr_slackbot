@@ -11,7 +11,6 @@ from setuptools import setup, find_packages
 
 NAME = 'tldr_slackbot'
 VERSION = '1.0.0'
-SITE_URI = 'https://github.com/bticknor/'
 DESCRIPTION = 'A bot for automatically summarizing links sent over Slack'
 LONG_DESCRIPTION = DESCRIPTION
 
@@ -43,7 +42,6 @@ if __name__ == '__main__':
           author=', '.join(__credits__),
           maintainer=__maintainer__,
           maintainer_email=__email__,
-          url=SITE_URI,
           setup_requires=SETUP_DEPS,
           install_requires=INSTALL_DEPS,
           extras_require=EXTRAS_DEPS,
