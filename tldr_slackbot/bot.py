@@ -3,6 +3,7 @@ Module for core bot logic.
 """
 
 import logging
+from celery_config import app
 from tldr_slackbot.utils import (
     contains_url
 )
@@ -53,7 +54,7 @@ def execute_bot(bot_config, rtm_output):
     if rtm_output and len(rtm_output) > 0:
         for event in rtm_output:
             if is_relevant_event(event, bot_id):
-                handle_command(event, bot_token, smmry_api_key)
+                handle_command.delay(event, bot_token, smmry_api_key)
 
 
 def is_relevant_event(event, bot_id):
@@ -161,6 +162,7 @@ def act_on_command(parsed_command, channel, bot_token, smmry_api_key):
     write_slack_message(bot_token, channel, output, 'tldr_bot')
 
 
+@app.task
 def handle_command(command_event, bot_token, smmry_api_key):
     """Parses command event and takes appropriate action.  This logic
     is grouped together for the sake of running it all asynchronously.
