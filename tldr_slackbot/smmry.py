@@ -1,6 +1,8 @@
+"""Logic for interfacing with SMMRY API."""
+
 import logging
-import requests
 import json
+import requests
 from tldr_slackbot.utils import contains_url
 
 # SMMRY API URL BASE
@@ -24,9 +26,7 @@ def request_smmry(api_key, url, summary_length=5, summary_keyword_count=3):
     :rtype: dict
     """
     if not contains_url(url):
-        logging.info('Not attempting to summarize {0}, invalid URL'.format(
-            url
-        ))
+        logging.info('Not attempting to summarize %s, invalid URL', url)
         raise RuntimeError('Link provided not a valid URL')
     params = ('?SM_LENGTH={length}&SM_API_KEY={api_key}&SM_KEYWORD_COUNT'
               '={keyword_count}&SM_URL={url}')
@@ -64,9 +64,10 @@ def parse_response(response, requested_url):
         )
     parsed_response = json.loads(response.text)
     if 'sm_api_error' in parsed_response.keys():
-        logging.info('SMMRY failure with message: {0}'.format(
+        logging.info(
+            'SMMRY failure with message: %s',
             parsed_response['sm_api_message']
-        ))
+        )
         raise RuntimeError(
             'SMMRY failed to summarize {0} with message: {1}'.format(
                 requested_url,

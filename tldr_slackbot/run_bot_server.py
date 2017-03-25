@@ -1,6 +1,8 @@
+"""Runs the bot server."""
+
 import argparse
-from slackclient import SlackClient
 import time
+from slackclient import SlackClient
 from tldr_slackbot.config import TLDR_BOT_CONFIG
 from tldr_slackbot.bot import execute_bot
 from tldr_slackbot.utils import set_up_logging

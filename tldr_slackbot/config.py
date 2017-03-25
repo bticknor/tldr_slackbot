@@ -1,17 +1,19 @@
+"""Parses config file."""
+
 import ConfigParser
 import os
 
 
-config = ConfigParser.ConfigParser()
-config.read([os.path.expanduser('~/.tldr_slackbot_conf')])
+CONFIG = ConfigParser.ConfigParser()
+CONFIG.read([os.path.expanduser('~/.tldr_slackbot_conf')])
 try:
-    bot_token = config.get('Slack', 'bot_token')
-    bot_id = config.get('Slack', 'bot_id')
-    smmry_api_key = config.get('SMMRY', 'api_key')
+    BOT_TOKEN = CONFIG.get('Slack', 'bot_token')
+    BOT_ID = CONFIG.get('Slack', 'bot_id')
+    SMMRY_API_KEY = CONFIG.get('SMMRY', 'api_key')
     TLDR_BOT_CONFIG = {
-        'bot_token': bot_token,
-        'bot_id': bot_id,
-        'smmry_api_key': smmry_api_key,
+        'bot_token': BOT_TOKEN,
+        'bot_id': BOT_ID,
+        'smmry_api_key': SMMRY_API_KEY,
     }
 except:
     raise RuntimeError('Issue with config file!')

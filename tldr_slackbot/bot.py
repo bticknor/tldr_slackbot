@@ -2,11 +2,8 @@
 Module for core bot logic.
 """
 
-import time
-from slackclient import SlackClient
 import logging
 from tldr_slackbot.utils import (
-    extract_urls,
     contains_url
 )
 from tldr_slackbot.smmry import summarize_data
@@ -17,7 +14,7 @@ from tldr_slackbot.slack import (
 )
 
 
-HELP_MESSAGE = """
+HELP_MESSAGE = u"""
 What's up! I'm a bot for summarizing external links sent over Slack. Here's
 how to use me: @tldr_bot [#channel|@dm|help]. Call me and I'll automatically
 summarize the most recent external link posted to the specified channel/dm,
@@ -25,7 +22,7 @@ outputting the summary to where you called me from.  If you don't specify a
 place to look, I'll just look in the channel/dm where you called me.
 """.replace('\n', ' ')
 
-CONFUSED_MESSAGE = """I'm sorry I don't understand that! Please provide a
+CONFUSED_MESSAGE = u"""I'm sorry I don't understand that! Please provide a
 link to an external web-page so I can try to summarize it!""".replace(
     '\n', ' '
 )
@@ -38,7 +35,6 @@ def execute_bot(bot_config, rtm_output):
       1) Direct messages
       2) Group messages where the bot is called using <@{bot_id}>
 
-    ##TODO below
     Handling of events is done asychronously - as soon as a relevant
     event is identified it is handled by a separate process and the bot
     continues to parse the RTM firehose.
@@ -54,13 +50,10 @@ def execute_bot(bot_config, rtm_output):
     bot_id = bot_config['bot_id']
     bot_token = bot_config['bot_token']
     smmry_api_key = bot_config['smmry_api_key']
-    bot_called = '<@{}>'.format(bot_id)
-    command_events = []
     if rtm_output and len(rtm_output) > 0:
         for event in rtm_output:
             if is_relevant_event(event, bot_id):
-                ##TODO: make this call asynchronous
-                handle_command(bot_id, event, bot_token, smmry_api_key) 
+                handle_command(event, bot_token, smmry_api_key)
 
 
 def is_relevant_event(event, bot_id):
@@ -156,25 +149,22 @@ def act_on_command(parsed_command, channel, bot_token, smmry_api_key):
         output = CONFUSED_MESSAGE
     else:
         try:
-            logging.info('Attempting to summarize page at {0}'.format(
-                parsed_command
-            ))
+            logging.info('Attempting to summarize page at %s', parsed_command)
             output = summarize_data(smmry_api_key, parsed_command)
         except RuntimeError as error:
             logging.info(
-                'Failed to summarize page at {0} with message: {1}'.format(
-                    parsed_command, error.message
-            ))
-            output = error.message
+                'Failed to summarize page at %s with message: %s',
+                parsed_command,
+                error.message
+            )
+            output = unicode(error.message)
     write_slack_message(bot_token, channel, output, 'tldr_bot')
 
 
-def handle_command(bot_id, command_event, bot_token, smmry_api_key):
+def handle_command(command_event, bot_token, smmry_api_key):
     """Parses command event and takes appropriate action.  This logic
     is grouped together for the sake of running it all asynchronously.
 
-    :param bot_id: id of bot
-    :type bot_id: str
     :param command_event: command to handle
     :type command_event: dict
     :param bot_token: API token of bot
