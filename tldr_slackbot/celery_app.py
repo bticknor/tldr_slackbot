@@ -3,7 +3,7 @@ from celery import Celery
 
 # instantiate celery instance
 app = Celery(
-    'celery_config',
+    'celery_app',
     broker='redis://localhost:6379/0',
     include=['tldr_slackbot.bot']
 )

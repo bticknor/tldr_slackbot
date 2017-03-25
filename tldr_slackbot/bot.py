@@ -3,7 +3,7 @@ Module for core bot logic.
 """
 
 import logging
-from celery_config import app
+from celery_app import app
 from tldr_slackbot.utils import (
     contains_url
 )
