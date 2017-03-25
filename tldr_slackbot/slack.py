@@ -1,4 +1,5 @@
 import json
+import logging
 import slackclient
 import requests
 from tldr_slackbot.utils import extract_urls
@@ -40,6 +41,11 @@ def get_channel_history(token, channel_id, count=100):
     :return: channel history
     :rtype: records (list of dicts)
     """
+    logging.info(
+        'Attempting to fetch channel history for channel {0}'.format(
+            channel_id
+        )
+    )
     indicator_chars_to_api_methods = {
         'D': 'im.history',
         'C': 'channels.history',
@@ -92,6 +98,7 @@ def write_slack_message(token, channel_id, message, username):
 
     :return: None
     """
+    logging.info('Writing {0} to channel {1}'.format(message, channel_id))
     api_method = 'chat.postMessage'
     params = {
         'token': token,

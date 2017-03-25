@@ -4,12 +4,13 @@ Module for core bot logic.
 
 import time
 from slackclient import SlackClient
-from utils import (
+import logging
+from tldr_slackbot.utils import (
     extract_urls,
     contains_url
 )
-from smmry import summarize_data
-from slack import (
+from tldr_slackbot.smmry import summarize_data
+from tldr_slackbot.slack import (
     get_channel_history,
     get_most_recent_url,
     write_slack_message
@@ -155,8 +156,15 @@ def act_on_command(parsed_command, channel, bot_token, smmry_api_key):
         output = CONFUSED_MESSAGE
     else:
         try:
+            logging.info('Attempting to summarize page at {0}'.format(
+                parsed_command
+            ))
             output = summarize_data(smmry_api_key, parsed_command)
         except RuntimeError as error:
+            logging.info(
+                'Failed to summarize page at {0} with message: {1}'.format(
+                    parsed_command, error.message
+            ))
             output = error.message
     write_slack_message(bot_token, channel, output, 'tldr_bot')
 
