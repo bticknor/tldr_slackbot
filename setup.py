@@ -20,7 +20,8 @@ SETUP_DEPS = ()
 INSTALL_DEPS = (
     'configparser==3.5.0',
     'requests==2.13.0',
-    'slackclient==1.0.5'
+    'slackclient==1.0.5',
+    'celery==4.0.2'
 )
 EXTRAS_DEPS = {}
 TESTS_DEPS = ()

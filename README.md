@@ -12,7 +12,9 @@ Right now, the TLDR bot can only be ```pip```d directly from GitHub, it isn't re
 
 ### Prerequisites
 
-In order to run the TLDR bot, you'll need:
+The TLDR Bot handles commands asynchronously with Celery, using Redis as a message broker.  For this reason you'll need Redis installed on the system running the bot server.  Redis should be running on the default port of 6379.
+
+For bot credentials, you'll need:
 1) A SMMRY API key, which can be obtained here: ```http://smmry.com/api```
 2) A Slack bot token, which can be obtained here: ```https://api.slack.com/```
 3) The user ID of the bot, available after creation of its token
@@ -34,7 +36,10 @@ api_key={SMMRY_API_KEY}
 
 ## Running the Bot Server
 
-###TODO: THIS!
+Running the bot involves:
+1) Starting a Redis server on localhost:6379
+2) Starting a Celery worker using the tldr_slackbot.celery_app app
+3) Running the bot server - the entry point is: ```run_tldr_bot```
 
 ## Usage
 
