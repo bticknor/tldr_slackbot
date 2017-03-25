@@ -86,11 +86,7 @@ def format_response(parsed_response):
     :return: formatted_response
     :rtype: str
     """
-    return """
-    {0}
-    {1}
-    {2}
-    """.format(
+    return u'{0}\n{1}\n{2}'.format(
         parsed_response['sm_api_title'],
         parsed_response['sm_api_content'],
         parsed_response['sm_api_keyword_array']

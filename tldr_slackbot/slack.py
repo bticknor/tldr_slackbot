@@ -98,7 +98,7 @@ def write_slack_message(token, channel_id, message, username):
 
     :return: None
     """
-    logging.info('Writing {0} to channel {1}'.format(message, channel_id))
+    logging.info('Writing page summary to {0}'.format(channel_id))
     api_method = 'chat.postMessage'
     params = {
         'token': token,
