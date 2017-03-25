@@ -1,5 +1,23 @@
 """Utility functions for TLDR bot."""
 
+import logging
+
+
+LOG_LEVELS = {
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'warning': logging.WARNING,
+    'error': logging.ERROR
+}
+
+
+def set_up_logging(log_level='info'):
+    """Sets up logging."""
+    logging.basicConfig(
+        level=LOG_LEVELS.get(log_level, 'info'),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
 
 def contains_url(string):
     """Determines whether string is a URL.
