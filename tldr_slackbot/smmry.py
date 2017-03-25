@@ -87,13 +87,13 @@ def format_response(parsed_response):
     :rtype: str
     """
     return """
-    Summary title: {0}
-    Summary: {1}
-    Keywords: {2}
+    {0}
+    {1}
+    {2}
     """.format(
         parsed_response['sm_api_title'],
         parsed_response['sm_api_content'],
-        str(parsed_response['sm_api_keyword_array'])
+        parsed_response['sm_api_keyword_array']
     )
 
 
