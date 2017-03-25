@@ -1,20 +1,21 @@
 # Auto-Summarization Bot for Slack
 
-Inspired by the Reddit TLDR Bot, here is a bot that does the same thing on Slack.  The bot works by summarizing external links sent over slack via calls to the SMMRY algorithm API.
+Inspired by the Reddit TLDR Bot, here is a bot that does the same thing on Slack.  The bot works by summarizing external links sent over slack via calls to the SMMRY algorithm API. The bot currently supports:
+
+1) Summarizing webpages of links sent directly to it over DM
+2) Summarizing the webpage of the most recent external link sent to a public channel
 
 ## Getting Started
 
 ### Installation
 
-Right now, the TLDR bot can only be ```pip```d directly from GitHub, it isn't registered on PyPi:
-
-```pip install git+https://github.com/bticknor/tldr_slackbot```
+The TLDR Bot is not registered on PyPi...it can be ```pip```d straight from GitHub: ```pip install git+https://github.com/bticknor/tldr_slackbot```
 
 ### Prerequisites
 
-The TLDR Bot handles commands asynchronously with Celery, using Redis as a message broker.  For this reason you'll need Redis installed on the system running the bot server.  Redis should be running on the default port of 6379.
+The TLDR Bot handles commands asynchronously with Celery, using Redis as a message broker.  For this reason you'll need Redis installed on the system running the bot server.
 
-For bot credentials, you'll need:
+For Slack/SMMRY API credentials/info, you'll need:
 1) A SMMRY API key, which can be obtained here: ```http://smmry.com/api```
 2) A Slack bot token, which can be obtained here: ```https://api.slack.com/```
 3) The user ID of the bot, available after creation of its token
