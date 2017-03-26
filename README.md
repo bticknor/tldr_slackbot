@@ -38,9 +38,9 @@ api_key={SMMRY_API_KEY}
 ## Running the Bot Server
 
 Running the bot involves:
-1) Starting a Redis server on localhost:6379
-2) Starting a Celery worker using the tldr_slackbot.celery_app app
-3) Running the bot server - the entry point is: ```run_tldr_bot```
+1) Starting a Redis server on localhost port 6379: ```redis-server```
+2) Starting a Celery worker using the tldr_slackbot.celery_app app: ```celery worker -A tldr_slackbot.celery_app [OTHER OPTIONS]```
+3) Running the bot server: ```run_tldr_bot```
 
 ## Usage
 
